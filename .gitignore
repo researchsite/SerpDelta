@@ -1,0 +1,39 @@
+# Environment
+.env
+
+# SerpApi disk cache (local testing only — do not commit)
+serp_cache/
+
+# LLM answer disk cache (training-data answers, 7-day TTL)
+llm_cache/
+
+# Dev notes / bug log (local only — free to write without worrying about commits)
+dev-notes/
+
+# Demo slides, demo script, and snapshots (presenter use only — not committed)
+demo/
+
+# Context folder — PRD, notes, conversation logs (local only)
+context/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Logs
+*.log
+*.log.*
+
+# OS
+.DS_Store
+Thumbs.db
