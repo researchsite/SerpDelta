@@ -173,7 +173,17 @@ SERPAPI_SESSION_LIMIT=40  # max SerpApi calls per browser session (2 per query)
 SERP_CACHE_TTL_HOURS=24   # disk cache TTL for SerpApi results
 ```
 
-### 3. Run
+### 3. Modes of operation
+
+| Mode | When | Behaviour |
+|---|---|---|
+| **Live mode** | API keys present (`.env`, session, or Streamlit secrets) | Full real-time queries — SerpApi + LLM |
+| **Demo mode** | No API keys configured | Pre-loaded results for 9 preset queries; custom queries show closest match |
+
+Keys are read in priority order: **UI session → `.env` / environment → Streamlit secrets → demo mode**.
+Running locally with a `.env` file automatically activates live mode — no extra steps needed.
+
+### 4. Run
 
 **Windows (double-click or PowerShell):**
 ```powershell
@@ -188,7 +198,21 @@ python -m streamlit run app.py --server.port 8501
 
 App opens at **http://localhost:8501**
 
-### 4. (Optional) Pre-warm caches
+### 5. Deploy to Streamlit Cloud
+
+1. Push repo to GitHub (already done — see repo link above)
+2. Go to [share.streamlit.io](https://share.streamlit.io) → New app → connect repo
+3. Add secrets in the Streamlit Cloud dashboard under **Settings → Secrets**:
+   ```toml
+   SERPAPI_KEY = "your_key"
+   NEBIUS_API_KEY = "your_key"
+   ```
+   With secrets configured, the deployed app runs in **live mode** for all visitors.
+   Without secrets, it runs in **demo mode** — still fully functional with 9 pre-loaded examples.
+
+4. Visitors can also enter their own API keys in the **⚙️ Configure API Keys** sidebar panel — keys are stored in their browser session only, never sent to any server.
+
+### 6. (Optional) Pre-warm caches
 
 Run all demo queries ahead of a presentation so every query is instant:
 

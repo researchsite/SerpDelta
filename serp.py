@@ -73,13 +73,13 @@ def _fetch_news(query: str, key: str) -> list:
     ]
 
 
-def get_live_context(query: str) -> dict:
+def get_live_context(query: str, serpapi_key: str = "") -> dict:
     """Fetch live web context. Disk-cached when available. Search + News run in parallel."""
     cached = _load_from_cache(query)
     if cached is not None:
         return cached
 
-    key = os.getenv("SERPAPI_KEY")
+    key = serpapi_key or os.getenv("SERPAPI_KEY")
 
     # Run both SerpApi calls in parallel — cuts total time roughly in half
     with ThreadPoolExecutor(max_workers=2) as pool:

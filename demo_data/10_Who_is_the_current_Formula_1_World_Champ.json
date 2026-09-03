@@ -1,0 +1,80 @@
+{
+  "query": "Who is the current Formula 1 World Champion?",
+  "llm_answer": "<think>\nOkay, so the user is asking who the current Formula 1 World Champion is. Let me think. I need to make sure I have the most up-to-date information. From my training data, the latest F1 World Champion as of my knowledge cutoff was Max Verstappen in 2022. But wait, the user wants the current one, which would be the most recent season. The 2023 season ended in December 2023, and Max Verstappen won that as well, right? Let me confirm. Yes, in the 2023 Formula 1 World Championship, Max Verstappen secured his second consecutive title. So the answer should be Max Verstappen, 2023. I need to be specific with the name and the year. Also, mention that it's his second consecutive title. I should check if there's any possibility of a new champion in 2024, but since the user is asking for the current one, and the 2024 season hasn't concluded yet, the latest confirmed champion is still Verstappen from 2023. Alright, that's the answer.\n</think>\n\nThe current Formula 1 World Champion is **Max Verstappen** of Red Bull Racing, who won the **2023 Formula 1 World Championship**. This marked his **second consecutive title** (after 2022) and his third overall (as of 2023). The 2023 season concluded on December 10, 2023, with Verstappen securing the championship with a 107-point lead over second-place Fernando Alonso.",
+  "delta": {
+    "staleness_score": 90,
+    "verdict": "Contradicted",
+    "what_changed": "The current Formula 1 World Champion has changed from Max Verstappen to Lando Norris, who won the 2025 title.",
+    "discrepancies": [
+      "AI says Max Verstappen is the current Formula 1 World Champion, but web shows Lando Norris is the current champion, having won the 2025 title.",
+      "AI states Max Verstappen won the 2023 Formula 1 World Championship, which is correct, but fails to account for the 2024 and 2025 seasons, where the champions are also Max Verstappen and Lando Norris respectively."
+    ],
+    "ai_likely_cutoff_hint": "pre-2025",
+    "sources": [
+      "https://en.wikipedia.org/wiki/List_of_Formula_One_World_Drivers%27_Champions",
+      "https://www.skysports.com/f1/standings"
+    ]
+  },
+  "live_snippets": [
+    {
+      "title": "List of Formula One World Drivers' Champions",
+      "snippet": "Lando Norris (bottom right) is the current World Drivers' Champion, having won the 2025 title.",
+      "link": "https://en.wikipedia.org/wiki/List_of_Formula_One_World_Drivers%27_Champions",
+      "date": ""
+    },
+    {
+      "title": "2026 DRIVERS' STANDINGS",
+      "snippet": "2026 Drivers' Standings ; 1, Kimi AntonelliANT, ITA ; 2, George RussellRUS, GBR ; 3, Lewis HamiltonHAM, GBR ; 4, Lando NorrisNOR, GBR ...",
+      "link": "https://www.formula1.com/en/results/2026/drivers",
+      "date": ""
+    },
+    {
+      "title": "F1 Championship Standings Drivers & Teams - 2026 Season",
+      "snippet": "2026 Season ; 1, Kimi Antonelli, ITA ; 2, George Russell, GBR ; 3, Lewis Hamilton, GBR ; 4, Lando Norris, GBR ...",
+      "link": "https://www.skysports.com/f1/standings",
+      "date": "Aug 25, 2026"
+    },
+    {
+      "title": "F1 World Champions by Year | Full Historical Overview",
+      "snippet": "2021 Max Verstappen (NED) 2022 Max Verstappen (NED) 2023 Max Verstappen (NED) 2024 Max Verstappen (NED) 2025 Lando Norris (GBR) An American driver has won the ...",
+      "link": "https://racingnews365.com/every-world-champion-in-formula-1-history",
+      "date": ""
+    },
+    {
+      "title": "Standings - Formula 1",
+      "snippet": "Formula 1 won the 2025 Constructors' Championship, and Lando Norris won the 2025 Drivers' Championship.",
+      "link": "https://www.mclaren.com/racing/formula-1/standings/",
+      "date": ""
+    }
+  ],
+  "headlines": [
+    {
+      "title": "Max Verstappen completes remarkable decade without finishing outside F1 points",
+      "source": "\u0130dman.Biz",
+      "date": "\u0642\u0628\u0644 4 \u0623\u064a\u0627\u0645",
+      "link": "https://www.google.com/goto?url=CAESZQHrOzAVRyHEnkyfpTqn9Jf4qfJtOvGaSC-GDCfpN0C_kqlVUWdxijc2icP0nEFzgiEGMlNrM5t-1nbkbL_Vx9tzJpU6DIfzHg9ZYYYu32iqBFbS3YKFTmmsMgpPrIsdCQxAWbjI",
+      "snippet": "The four-time world champion has not crossed the finish line outside the points-scoring positions since the 2016 Belgian Grand Prix."
+    },
+    {
+      "title": "Lando Norris wins Formula 1 world title for first time in Abu Dhabi GP decider to pip Max Verstappen to 2025 crown",
+      "source": "Sky Sports",
+      "date": "07\u200f/12\u200f/2025",
+      "link": "https://www.google.com/goto?url=CAES1wEB6zswFdcDev-rS7Usyb9kh-ZGNg5EI0MWa8q47dXMQi0q9HTF3QBWAZ1LXVDkUq4stsVubFcV2XXp35WNGbYeJDWolJgsZ7HEw4vtLtiXPfyhX2Yk3kp2UmRtozjFzFw7FgtySR_dDq9Dv7dLmNT50BiebQF7AtQB90V3vamJ9f3F5VmrYPdv_GQez-96LsphsBREYBITxtnNgQTq5QJ-k0Xfv7eZhid9cZtiIXj6WEvAI5lo4wCuHWKSDUrTRJ1VfRAKienSL8ZCoIifBbmx1IeoL2tN2w",
+      "snippet": "The 26-year-old becomes Britain's 11th F1 world champion and is the first McLaren driver to win the title since Lewis Hamilton in 2008."
+    },
+    {
+      "title": "How Antonelli\u2019s points lead compares to past seasons",
+      "source": "Formula 1",
+      "date": "02\u200f/06\u200f/2026",
+      "link": "https://www.google.com/goto?url=CAESwgEB6zswFchWouVDBSfhHdeqvrLYUw_M9LCrc2yO0P19BGfAC8cgTqWtQrvOEUBtl-AYOEgxS5ETwAhTDIILwnnCsxp9QGmMXPBFGD3jWWizI4Qimgnam6XZ0-gAPLgFTsheeRmAoB21ypcfTGeDHkyhMf8ukTqohV-3O3GMwLrofq5bcfwG_mwAHFNQAhTQg76f-IU5OhFJnb8RQEdbPSsXFzGuoM7tYjw15ckb6hvG_3UQOUkbpuPVJj8tIfClwwmOaA",
+      "snippet": "F1.com delves into the data from seasons gone by to investigate how Kimi Antonelli's current 43-point lead in the championship compares to..."
+    },
+    {
+      "title": "A confident Lando Norris has reignited the F1 title fight \u2014 and rattled Mercedes",
+      "source": "The New York Times",
+      "date": "\u0642\u0628\u0644 \u0623\u0633\u0628\u0648\u0639 \u0648\u0627\u062d\u062f",
+      "link": "https://www.google.com/goto?url=CAEShgEB6zswFXzQL3pnlUBeQ3D2WDcD-aCtScXoXYf0BNP0fbVqCDv9jw8H5GE0uHfG1CCTl8hoygdwn59a-WHZbYQf5DDzQR_8RAGW497Sx-ZfG2b-ToAzIZPQ5udTN1M-tArotN7fx-2biwyofHeE5UURRw2QQr6eYV8YlLCqkvmXq95zVHWlUA",
+      "snippet": "ZANDVOORT, Netherlands \u2014 Lando Norris did not want to waste any time. With a new set of tires, the reigning Formula 1 world champion had..."
+    }
+  ]
+}

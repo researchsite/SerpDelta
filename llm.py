@@ -16,7 +16,7 @@ LLM_CACHE_DIR.mkdir(exist_ok=True)
 LLM_CACHE_TTL = 7 * 24 * 3600
 
 
-def _providers(prefer_small: bool = False) -> list[dict]:
+def _providers(prefer_small: bool = False, nebius_key: str = "") -> list[dict]:
     """
     Return provider list in priority order.
     prefer_small=True uses Qwen3-32B (faster) for the initial answer call.
@@ -28,7 +28,7 @@ def _providers(prefer_small: bool = False) -> list[dict]:
         {
             "name":     f"Nebius ({'Qwen3-32B' if prefer_small else 'Llama-70B'})",
             "base_url": os.getenv("NEBIUS_BASE_URL", "https://api.studio.nebius.com/v1/"),
-            "api_key":  os.getenv("NEBIUS_API_KEY", ""),
+            "api_key":  nebius_key or os.getenv("NEBIUS_API_KEY", ""),
             "model":    small_model if prefer_small else large_model,
             "extra":    {"enable_thinking": False} if prefer_small else {},
         },
@@ -49,9 +49,9 @@ def _providers(prefer_small: bool = False) -> list[dict]:
     ]
 
 
-def _chat(messages: list[dict], max_tokens: int, prefer_small: bool = False) -> str:
+def _chat(messages: list[dict], max_tokens: int, prefer_small: bool = False, nebius_key: str = "") -> str:
     last_error = None
-    for p in _providers(prefer_small=prefer_small):
+    for p in _providers(prefer_small=prefer_small, nebius_key=nebius_key):
         if not p["api_key"] or p["api_key"] == "ollama":
             # For Ollama, always try (no key needed); skip others with empty key
             if p["name"] != "Ollama (local)" and not p["api_key"]:
@@ -99,20 +99,19 @@ def _save_llm_cache(query: str, answer: str) -> None:
 
 # ── Public API ────────────────────────────────────────────────────────────────
 
-def get_llm_answer(query: str) -> str:
+def get_llm_answer(query: str, nebius_key: str = "") -> str:
     """Get the LLM's training-data answer. Disk-cached for 7 days (training data is fixed)."""
     cached = _load_llm_cache(query)
     if cached is not None:
         return cached
 
     messages = [{"role": "user", "content": LLM_ANSWER_PROMPT.format(query=query)}]
-    # Use the smaller/faster model — we just need a confident factual answer
-    answer = _chat(messages, max_tokens=512, prefer_small=True)
+    answer = _chat(messages, max_tokens=512, prefer_small=True, nebius_key=nebius_key)
     _save_llm_cache(query, answer)
     return answer
 
 
-def compute_delta(query: str, llm_answer: str, live_data: dict) -> dict:
+def compute_delta(query: str, llm_answer: str, live_data: dict, nebius_key: str = "") -> dict:
     """Compare LLM answer vs live web data. Uses the larger model for structured JSON output."""
     prompt = DELTA_PROMPT.format(
         query=query,
@@ -122,7 +121,7 @@ def compute_delta(query: str, llm_answer: str, live_data: dict) -> dict:
         paa=live_data["paa"],
     )
     messages = [{"role": "user", "content": prompt}]
-    raw = _chat(messages, max_tokens=1024, prefer_small=False).strip()
+    raw = _chat(messages, max_tokens=1024, prefer_small=False, nebius_key=nebius_key).strip()
 
     if raw.startswith("```"):
         raw = raw.split("```")[1]

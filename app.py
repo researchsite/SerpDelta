@@ -1,6 +1,8 @@
 import re
 import os
 import json
+import difflib
+import pathlib
 import html as html_lib
 import streamlit as st
 from concurrent.futures import ThreadPoolExecutor
@@ -8,7 +10,43 @@ from dotenv import load_dotenv
 from serp import get_live_context, is_disk_cached
 from llm import get_llm_answer, compute_delta
 
-load_dotenv()
+load_dotenv()  # loads .env for local dev; no-op on Streamlit Cloud
+
+DEMO_DATA_DIR = pathlib.Path(__file__).parent / "demo_data"
+
+
+# ── API key resolution (session > env > st.secrets > demo mode) ───────────────
+def get_api_keys() -> dict:
+    session_keys = st.session_state.get("api_keys", {})
+    def _secret(k):
+        try: return st.secrets.get(k, "")
+        except: return ""
+    return {
+        "serpapi": session_keys.get("serpapi") or os.getenv("SERPAPI_KEY", "") or _secret("SERPAPI_KEY"),
+        "nebius":  session_keys.get("nebius")  or os.getenv("NEBIUS_API_KEY", "") or _secret("NEBIUS_API_KEY"),
+        "google":  session_keys.get("google")  or os.getenv("GOOGLE_API_KEY", "") or _secret("GOOGLE_API_KEY"),
+    }
+
+def is_demo_mode(keys: dict) -> bool:
+    return not keys.get("serpapi") and not keys.get("nebius")
+
+def strip_thinking(text: str) -> str:
+    """Remove <think>…</think> blocks from model responses."""
+    return re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
+
+def load_demo_result(query: str):
+    """Find the closest matching snapshot in demo_data/. Returns (data, score)."""
+    q_lower = query.strip().lower()
+    best_data, best_score = None, 0.0
+    for f in DEMO_DATA_DIR.glob("*.json"):
+        try:
+            data = json.loads(f.read_text(encoding="utf-8"))
+            score = difflib.SequenceMatcher(None, q_lower, data.get("query", "").lower()).ratio()
+            if score > best_score:
+                best_score, best_data = score, data
+        except Exception:
+            continue
+    return best_data, best_score
 
 st.set_page_config(
     page_title="SERP Delta — LLM Knowledge Gap Detector",
@@ -101,6 +139,12 @@ st.markdown("""
     background: rgba(107,114,128,0.12); border: 1px solid rgba(107,114,128,0.3);
     border-radius: 999px; padding: 0.2rem 0.65rem; font-size: 0.75rem;
     font-weight: 700; color: #9ca3af; letter-spacing: 0.04em;
+  }
+  .data-badge-demo {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.3);
+    border-radius: 999px; padding: 0.2rem 0.65rem; font-size: 0.75rem;
+    font-weight: 700; color: #a78bfa; letter-spacing: 0.04em;
   }
   @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.3} }
   .live-dot { display:inline-block; width:7px; height:7px; background:#4ade80;
@@ -275,13 +319,13 @@ if "serp_cache_hits" not in st.session_state:
 
 # ── Cached pipeline ────────────────────────────────────────────────────────────
 @st.cache_data(ttl=300, show_spinner=False)
-def run_pipeline(query: str):
+def run_pipeline(query: str, serpapi_key: str = "", nebius_key: str = ""):
     with ThreadPoolExecutor(max_workers=2) as pool:
-        llm_future = pool.submit(get_llm_answer, query)
-        serp_future = pool.submit(get_live_context, query)
-        llm_answer = llm_future.result()
-        live_data = serp_future.result()
-    delta = compute_delta(query, llm_answer, live_data)
+        llm_future  = pool.submit(get_llm_answer,   query, nebius_key)
+        serp_future = pool.submit(get_live_context,  query, serpapi_key)
+        llm_answer  = llm_future.result()
+        live_data   = serp_future.result()
+    delta = compute_delta(query, llm_answer, live_data, nebius_key)
     return llm_answer, live_data, delta
 
 
@@ -428,6 +472,8 @@ def render_leaderboard(history: list) -> None:
             src_badge = '<span style="background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);border-radius:999px;padding:0.15rem 0.5rem;font-size:0.7rem;font-weight:700;color:#4ade80;">● LIVE</span>'
         elif src == "cached":
             src_badge = '<span style="background:rgba(107,114,128,0.12);border:1px solid rgba(107,114,128,0.3);border-radius:999px;padding:0.15rem 0.5rem;font-size:0.7rem;font-weight:700;color:#9ca3af;">⏱ CACHED</span>'
+        elif src == "demo":
+            src_badge = '<span style="background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.3);border-radius:999px;padding:0.15rem 0.5rem;font-size:0.7rem;font-weight:700;color:#a78bfa;">🎭 DEMO</span>'
         else:
             src_badge = ""
 
@@ -526,6 +572,31 @@ with st.sidebar:
             )
         st.divider()
 
+    # ── API Key Configuration ─────────────────────────────────────────────────
+    _keys = get_api_keys()
+    _demo = is_demo_mode(_keys)
+    with st.expander("⚙️ API Keys" + (" — Demo Mode 🎭" if _demo else " ✅"), expanded=_demo):
+        st.caption("Keys stored in this browser session only — never sent to any server.")
+        _cur = st.session_state.get("api_keys", {})
+        _s_in = st.text_input("SerpApi Key", value=_cur.get("serpapi",""), type="password",
+                               placeholder="sk-...", key="cfg_serpapi")
+        _n_in = st.text_input("Nebius API Key", value=_cur.get("nebius",""), type="password",
+                               placeholder="v1.Cm...", key="cfg_nebius")
+        _c1, _c2 = st.columns(2)
+        with _c1:
+            if st.button("💾 Save", use_container_width=True, key="cfg_save"):
+                st.session_state["api_keys"] = {"serpapi": _s_in.strip(), "nebius": _n_in.strip()}
+                st.rerun()
+        with _c2:
+            if st.button("🗑 Clear", use_container_width=True, key="cfg_clear"):
+                st.session_state.pop("api_keys", None)
+                st.rerun()
+        if _demo:
+            st.info("Running in **Demo Mode** — preset queries only.", icon="🎭")
+        else:
+            st.success("Live mode active.", icon="✅")
+    st.divider()
+
     # ── SerpApi usage meter ───────────────────────────────────────────────────
     used         = st.session_state.get("serp_calls_used", 0)
     cache_hits   = st.session_state.get("serp_cache_hits", 0)
@@ -565,6 +636,24 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+_main_keys = get_api_keys()
+if is_demo_mode(_main_keys):
+    st.markdown("""
+    <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.25);
+         border-radius:12px;padding:0.75rem 1.25rem;margin-bottom:1rem;
+         display:flex;align-items:center;gap:0.75rem;">
+      <span style="font-size:1.3rem;">🎭</span>
+      <div>
+        <div style="color:#a78bfa;font-weight:700;font-size:0.9rem;">Demo Mode — No API Keys Configured</div>
+        <div style="color:#6b7280;font-size:0.82rem;">
+          Showing pre-loaded results for preset queries. To run live queries on any topic,
+          <strong style="color:#c7d2fe;">add your API keys in the sidebar ⚙️</strong>
+          — or click a preset query below to explore the demo.
+        </div>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
 # Don't pass value= when using key= — control widget via st.session_state["query_input"] only
 if "query_input" not in st.session_state:
     st.session_state["query_input"] = ""
@@ -584,42 +673,76 @@ with col_run:
 # ── Pipeline execution ────────────────────────────────────────────────────────
 if run_btn and query.strip():
     q_clean = query.strip()
+    _keys   = get_api_keys()
+    _demo   = is_demo_mode(_keys)
 
-    # Determine source BEFORE pipeline runs (all on main thread, no session state in threads)
-    is_st_cached   = q_clean in st.session_state.seen_queries
-    is_disk_hit    = is_disk_cached(q_clean)
-    will_hit_api   = not is_st_cached and not is_disk_hit
-
-    # Quota guard — only for live API calls
-    if will_hit_api:
-        limit = int(os.getenv("SERPAPI_SESSION_LIMIT", "40"))
-        if st.session_state.serp_calls_used + 2 > limit:
-            st.error(f"SerpApi session limit reached ({limit} calls). Reload to start a new session or increase SERPAPI_SESSION_LIMIT in .env.")
+    if _demo:
+        # ── Demo mode: load from pre-cached snapshots ─────────────────────────
+        result, match_score = load_demo_result(q_clean)
+        if result is None:
+            st.warning("🎭 No demo data available. Add API keys in the sidebar to run live queries.")
             st.stop()
 
-    with st.spinner("Querying AI + live web simultaneously…"):
-        try:
-            llm_answer, live_data, delta = run_pipeline(q_clean)
-        except Exception as e:
-            st.error(f"Pipeline error: {e}")
-            st.stop()
+        all_preset = [q for qs in DEMO_QUERIES.values() for q in qs]
+        is_exact   = any(q_clean.lower() == q.lower() for q in all_preset)
+        if not is_exact:
+            matched_q = result.get("query", "")
+            st.info(f"🎭 Demo mode — showing pre-loaded result for: *\"{matched_q}\"* "
+                    f"(closest match). Add API keys in the sidebar for custom live queries.", icon="🎭")
 
-    # Update tracking on main thread (never inside cached/threaded functions)
-    if will_hit_api:
-        st.session_state.serp_calls_used += 2
-    elif not is_st_cached:
-        st.session_state.serp_cache_hits += 1
+        llm_answer = strip_thinking(result.get("llm_answer", ""))
+        live_data  = {
+            "snippets":        result.get("live_snippets", []),
+            "headlines":       result.get("headlines", []),
+            "paa":             [],
+            "knowledge_graph": {},
+        }
+        delta     = result.get("delta", {})
+        is_cached = True
+        data_src  = "demo"
+        st.session_state.seen_queries.add(q_clean)
+        st.session_state.history.append({
+            "query": q_clean,
+            "staleness_score": delta.get("staleness_score", 0),
+            "verdict": delta.get("verdict", "Unknown"),
+            "source": "demo",
+        })
 
-    st.session_state.seen_queries.add(q_clean)
+    else:
+        # ── Live mode: hit APIs (or disk/memory cache) ────────────────────────
+        is_st_cached = q_clean in st.session_state.seen_queries
+        is_disk_hit  = is_disk_cached(q_clean)
+        will_hit_api = not is_st_cached and not is_disk_hit
 
-    is_cached = is_st_cached or is_disk_hit
+        if will_hit_api:
+            limit = int(os.getenv("SERPAPI_SESSION_LIMIT", "40"))
+            if st.session_state.serp_calls_used + 2 > limit:
+                st.error(f"SerpApi session limit reached ({limit} calls). Reload to start a new session.")
+                st.stop()
 
-    st.session_state.history.append({
-        "query": query,
-        "staleness_score": delta["staleness_score"],
-        "verdict": delta["verdict"],
-        "source": "cached" if is_cached else "live",
-    })
+        with st.spinner("Querying AI + live web simultaneously…"):
+            try:
+                llm_answer, live_data, delta = run_pipeline(
+                    q_clean, _keys["serpapi"], _keys["nebius"]
+                )
+            except Exception as e:
+                st.error(f"Pipeline error: {e}")
+                st.stop()
+
+        if will_hit_api:
+            st.session_state.serp_calls_used += 2
+        elif not is_st_cached:
+            st.session_state.serp_cache_hits += 1
+
+        st.session_state.seen_queries.add(q_clean)
+        is_cached = is_st_cached or is_disk_hit
+        data_src  = "cached" if is_cached else "live"
+        st.session_state.history.append({
+            "query": query,
+            "staleness_score": delta["staleness_score"],
+            "verdict": delta["verdict"],
+            "source": data_src,
+        })
 
     score   = delta["staleness_score"]
     verdict = delta["verdict"]
@@ -628,9 +751,11 @@ if run_btn and query.strip():
     gc      = gauge_class(score)
     sc_col  = score_color(score)
 
-    # ── Live / Cached badge HTML ──────────────────────────────────────────────
-    if is_cached:
-        data_badge = '<span class="data-badge-cached">⏱ CACHED — served from 5-min cache</span>'
+    # ── Live / Cached / Demo badge HTML ──────────────────────────────────────
+    if data_src == "demo":
+        data_badge = '<span class="data-badge-demo">🎭 DEMO — pre-loaded result</span>'
+    elif is_cached:
+        data_badge = '<span class="data-badge-cached">⏱ CACHED — served from disk cache</span>'
     else:
         data_badge = '<span class="data-badge-live"><span class="live-dot"></span> LIVE — fetched right now</span>'
 
