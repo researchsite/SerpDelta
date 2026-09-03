@@ -22,7 +22,7 @@ def _providers(prefer_small: bool = False, nebius_key: str = "") -> list[dict]:
     prefer_small=True uses Qwen3-32B (faster) for the initial answer call.
     prefer_small=False uses Llama 3.3 70B (more capable) for the delta JSON call.
     """
-    small_model = os.getenv("NEBIUS_CHAT_MODEL_SMALL", "Qwen/Qwen3-32B")
+    small_model = os.getenv("NEBIUS_CHAT_MODEL_SMALL", "Qwen/Qwen3-30B-A3B-Instruct-2507")
     large_model = os.getenv("NEBIUS_CHAT_MODEL",       "meta-llama/Llama-3.3-70B-Instruct")
     return [
         {
@@ -43,7 +43,7 @@ def _providers(prefer_small: bool = False, nebius_key: str = "") -> list[dict]:
             "name":     "Ollama (local)",
             "base_url": os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1/"),
             "api_key":  "ollama",
-            "model":    os.getenv("OLLAMA_MODEL", "llama3.2"),
+            "model":    os.getenv("OLLAMA_MODEL", "llama3.2:3b"),
             "extra":    {},
         },
     ]
