@@ -2,6 +2,10 @@
 
 > **Your AI assistant isn't lying — it's just frozen in time. This shows you exactly where, and by how much.**
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Streamlit-6366f1?style=for-the-badge&logo=streamlit)](https://serpdelta-heenqfrqmf3fxfxvkhe8hn.streamlit.app/)
+
+**[▶ Try the live demo →](https://serpdelta-heenqfrqmf3fxfxvkhe8hn.streamlit.app/)**
+
 SERP Delta is a real-time LLM grounding tool that detects and quantifies knowledge staleness by comparing AI answers against live Google search results. Ask any time-sensitive question, get a **Staleness Score (0–100)**, a verdict, specific discrepancies, and a visual knowledge decay timeline.
 
 Built for the [SerpApi Hackathon](https://hackathon.serpapi.com).
